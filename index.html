@@ -1,0 +1,625 @@
+ <!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>🎅 Santa's North Pole Hub</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Comfortaa&display=swap');
+  body {
+    margin: 0;
+    font-family: 'Comfortaa', cursive, Arial, sans-serif;
+    background: #001a33;
+    color: #eee;
+    text-align: center;
+    overflow-x: hidden;
+  }
+  h1 {
+    color: #ff2f2f;
+    text-shadow: 0 0 15px #ff4040;
+    margin-top: 12px;
+    font-weight: 900;
+  }
+  #countdown {
+    font-size: 1.3rem;
+    margin: 10px 0 25px 0;
+    text-shadow: 0 0 6px #fff;
+  }
+  #map {
+    position: relative;
+    width: 90%;
+    max-width: 900px;
+    height: 400px;
+    margin: 0 auto;
+    background: url('https://upload.wikimedia.org/wikipedia/commons/8/80/World_map_-_low_resolution.svg') no-repeat center;
+    background-size: contain;
+    border: 3px solid #fff;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 0 40px #ff4d4d inset;
+  }
+  #santa {
+    position: absolute;
+    font-size: 3.2rem;
+    transform: translate(-50%, -50%);
+    user-select: none;
+  }
+  #location, #speed {
+    font-size: 1.15rem;
+    margin: 8px 0 4px 0;
+    text-shadow: 0 0 6px #fff;
+  }
+  #controls {
+    margin: 20px auto 15px auto;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 14px;
+  }
+  button {
+    background: linear-gradient(145deg, #004080, #0066cc);
+    border: none;
+    padding: 12px 22px;
+    border-radius: 14px;
+    box-shadow:
+      0 0 10px #0055cc,
+      inset 0 0 8px #003366;
+    color: #fff;
+    font-weight: 700;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: 0.3s ease;
+    user-select: none;
+    min-width: 140px;
+  }
+  button:hover {
+    background: linear-gradient(145deg, #0066cc, #004080);
+    box-shadow:
+      0 0 20px #66a3ff,
+      inset 0 0 12px #004080;
+  }
+  #chatbox, #advent, #minigame, #quiz {
+    max-width: 600px;
+    margin: 20px auto;
+    background: rgba(255, 255, 255, 0.08);
+    border-radius: 16px;
+    padding: 18px 24px;
+    box-shadow: 0 0 10px #004080;
+    text-align: left;
+    color: #ccf9ff;
+  }
+  #chatbox h2, #advent h2, #minigame h2, #quiz h2 {
+    color: #00ccff;
+    margin-top: 0;
+  }
+  #chatlog {
+    height: 170px;
+    overflow-y: auto;
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 10px;
+    padding: 12px;
+    margin-bottom: 12px;
+    font-size: 0.95rem;
+  }
+  .msg {
+    margin: 6px 0;
+  }
+  .msg.user {
+    color: #00b7ff;
+    font-weight: 600;
+  }
+  .msg.elf {
+    color: #4dffb8;
+    font-weight: 600;
+  }
+  #chatInput {
+    width: 80%;
+    padding: 8px 12px;
+    border-radius: 10px;
+    border: none;
+    font-size: 1rem;
+  }
+  #chatInput:focus {
+    outline: 2px solid #00ccff;
+  }
+  #adventMessage, #quizResult, #dailySurprise {
+    margin-top: 15px;
+    font-size: 1.1rem;
+    text-align: center;
+    font-weight: 700;
+    color: #ffbf00;
+    text-shadow: 0 0 6px #fff;
+  }
+  #calendar {
+    display: grid;
+    grid-template-columns: repeat(6, 1fr);
+    gap: 7px;
+    margin-top: 14px;
+  }
+  .day {
+    background: #004080;
+    border-radius: 10px;
+    padding: 12px 0;
+    font-weight: 800;
+    font-size: 1.1rem;
+    cursor: pointer;
+    user-select: none;
+    color: #aaddff;
+    transition: 0.3s ease;
+  }
+  .day:hover {
+    background: #0066cc;
+    color: #ffffff;
+  }
+  .day.opened {
+    background: #00ccff;
+    color: #003344;
+    cursor: default;
+  }
+  #minigame {
+    text-align: center;
+  }
+  #snowCount {
+    font-size: 2.3rem;
+    font-weight: 700;
+    color: #66ccff;
+    user-select: none;
+  }
+  /* Quiz Styles */
+  #quiz form {
+    display: flex;
+    flex-direction: column;
+  }
+  #quiz form label {
+    margin: 6px 0;
+    font-size: 1rem;
+    cursor: pointer;
+    user-select: none;
+  }
+  #quiz button[type="submit"] {
+    margin-top: 14px;
+    align-self: center;
+    min-width: 150px;
+  }
+  footer {
+    margin: 30px 0 20px 0;
+    font-size: 0.8rem;
+    color: #666;
+    user-select: none;
+  }
+
+  /* Snow canvas */
+  canvas#snow {
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    pointer-events: none;
+    z-index: -1;
+  }
+</style>
+</head>
+<body>
+<canvas id="snow"></canvas>
+<h1>🎄 Santa's North Pole Hub 🎄</h1>
+<div id="countdown"></div>
+<div id="dailySurprise" title="Your daily magical event!"></div>
+<div id="map"><div id="santa">🛷</div></div>
+<div id="location">Santa is warming up at the North Pole...</div>
+<div id="speed">Speed: 0 mph</div>
+
+<div id="controls">
+  <button id="btnResetSanta">Reset Santa</button>
+  <button id="btnMusic">🎵 Music</button>
+  <button id="btnAdvent">🎁 Advent Calendar</button>
+  <button id="btnGame">🕹 Mini Game</button>
+  <button id="btnChat">🧝 Chat with Elf</button>
+  <button id="btnQuiz">❓ Nice or Naughty Quiz</button>
+</div>
+
+<!-- Chat with Elf -->
+<div id="chatbox" style="display:none;">
+  <h2 id="elfName">🧝 Chat with Elf</h2>
+  <div id="chatlog"></div>
+  <input type="text" id="chatInput" placeholder="Ask your Elf something..." />
+  <button id="btnSendChat">Send</button>
+</div>
+
+<!-- Advent Calendar -->
+<div id="advent" style="display:none;">
+  <h2>🎁 Advent Surprises</h2>
+  <div id="calendar"></div>
+  <p id="adventMessage"></p>
+</div>
+
+<!-- Mini Game -->
+<div id="minigame" style="display:none;">
+  <h2>🎮 Snow Clicker</h2>
+  <p>Click the ❄️ to earn snowflakes!</p>
+  <h3>❄️ <span id="snowCount">0</span> snowflakes</h3>
+  <button id="btnClickSnow">❄️ Click!</button>
+</div>
+
+<!-- Nice or Naughty Quiz -->
+<div id="quiz" style="display:none;">
+  <h2>❓ Are You on the Nice or Naughty List?</h2>
+  <form id="quizForm">
+    <label><input type="radio" name="q1" value="nice" required> Helped someone recently</label>
+    <label><input type="radio" name="q1" value="naughty"> Ignored someone in need</label>
+
+    <label><input type="radio" name="q2" value="nice" required> Did your chores on time</label>
+    <label><input type="radio" name="q2" value="naughty"> Avoided chores</label>
+
+    <label><input type="radio" name="q3" value="nice" required> Shared with friends/family</label>
+    <label><input type="radio" name="q3" value="naughty"> Took things without asking</label>
+
+    <label><input type="radio" name="q4" value="nice" required> Said please and thank you</label>
+    <label><input type="radio" name="q4" value="naughty"> Was rude or mean</label>
+
+    <label><input type="radio" name="q5" value="nice" required> Tried to be kind every day</label>
+    <label><input type="radio" name="q5" value="naughty"> Didn't care about others</label>
+
+    <button type="submit">Check My Status</button>
+  </form>
+  <p id="quizResult"></p>
+</div>
+
+<footer>© 2025 Santa & Friends • For fun only</footer>
+
+<script>
+  // Countdown until Christmas
+  function updateCountdown() {
+    const today = new Date();
+    const year = today.getFullYear();
+    let christmas = new Date(year, 11, 25);
+    if (today > christmas) christmas.setFullYear(year + 1);
+    const diff = christmas - today;
+    const days = Math.ceil(diff / (1000 * 60 * 60 * 24));
+    document.getElementById("countdown").innerText = `🎅 ${days} days until Christmas!`;
+  }
+  updateCountdown();
+
+  // Snow animation
+  const snow = document.getElementById("snow");
+  const ctx = snow.getContext("2d");
+  let flakes = [];
+  function resize() {
+    snow.width = window.innerWidth;
+    snow.height = window.innerHeight;
+  }
+  window.onresize = resize;
+  resize();
+  function createFlake() {
+    flakes.push({ x: Math.random() * snow.width, y: 0, s: Math.random() * 3 + 1, vx: Math.random() * 0.5 - 0.25 });
+  }
+  function drawSnow() {
+    ctx.clearRect(0, 0, snow.width, snow.height);
+    ctx.fillStyle = "white";
+    flakes.forEach((f) => {
+      ctx.beginPath();
+      ctx.arc(f.x, f.y, f.s, 0, Math.PI * 2);
+      ctx.fill();
+      f.y += f.s;
+      f.x += f.vx;
+    });
+    flakes = flakes.filter((f) => f.y < snow.height);
+    if (Math.random() < 0.3) createFlake();
+    requestAnimationFrame(drawSnow);
+  }
+  drawSnow();
+
+  // Background Music
+  let musicOn = false;
+  const audio = new Audio("https://cdn.pixabay.com/download/audio/2023/01/10/audio_0ff382a35e.mp3?filename=jingle-bells-14671.mp3");
+  audio.loop = true;
+  function toggleMusic() {
+    musicOn = !musicOn;
+    if (musicOn) audio.play();
+    else audio.pause();
+    btnMusic.textContent = musicOn ? "🔇 Music" : "🎵 Music";
+  }
+
+  // Santa Tracker
+  const cities = [
+    { name: "North Pole", x: 50, y: 5 },
+    { name: "London", x: 41, y: 23 },
+    { name: "Paris", x: 42, y: 25 },
+    { name: "New York", x: 27, y: 33 },
+    { name: "Rio", x: 35, y: 75 },
+    { name: "Cape Town", x: 46, y: 85 },
+    { name: "Tokyo", x: 82, y: 32 },
+    { name: "Sydney", x: 87, y: 75 },
+  ];
+  let cur = 0,
+    next = 1,
+    progress = 0,
+    mph = 0;
+  const santa = document.getElementById("santa");
+  const locationText = document.getElementById("location");
+  const speedText = document.getElementById("speed");
+  function setSpeed() {
+    mph = Math.random() * 2000 + 5000;
+    speedText.innerText = `Speed: ${mph.toFixed(0)} mph`;
+  }
+  function animate() {
+    const s = cities[cur],
+      e = cities[next];
+    const dx = e.x - s.x,
+      dy = e.y - s.y,
+      dist = Math.sqrt(dx * dx + dy * dy);
+    progress += 0.5;
+    if (progress >= dist) {
+      cur = next;
+      next = (next + 1) % cities.length;
+      progress = 0;
+      locationText.innerText = `🎅 Arrived at ${e.name}!`;
+      setTimeout(() => {
+        locationText.innerText = `🎅 Heading to ${cities[next].name}...`;
+        setSpeed();
+        requestAnimationFrame(animate);
+      }, 700);
+      return;
+    }
+    santa.style.left = s.x + dx * (progress / dist) + "%";
+    santa.style.top = s.y + dy * (progress / dist) + "%";
+    requestAnimationFrame(animate);
+  }
+  function resetSanta() {
+    cur = 0;
+    next = 1;
+    progress = 0;
+    setSpeed();
+    requestAnimationFrame(animate);
+  }
+  setSpeed();
+  requestAnimationFrame(animate);
+
+  // Daily Elf AI
+  const elves = [
+    {
+      name: "Sparkle",
+      personality: "cheerful",
+      greetings: [
+        "Hi there! I'm Sparkle, your cheerful elf. Ready for some fun?",
+        "Sparkle here! Have you been nice this year?",
+      ],
+      jokes: ["Why don’t elves ever get tired? Because they have *elf* energy!"],
+      facts: ["Santa's sleigh can travel faster than sound!"],
+    },
+    {
+      name: "Frostbite",
+      personality: "cool and logical",
+      greetings: [
+        "Greetings. I’m Frostbite, your logical elf.",
+        "Let’s calculate how fast Santa is going.",
+      ],
+      jokes: ["Why did the snowman call Frostbite? Because he was cold!"],
+      facts: ["The North Pole is actually located in the Arctic Ocean."],
+    },
+    {
+      name: "Twinkle",
+      personality: "funny",
+      greetings: [
+        "Hey hey! Twinkle here, ready to make you laugh.",
+        "What do you call a snowman in summer? A puddle!",
+      ],
+      jokes: ["Why did Santa's helper see the doctor? Because he had low *elf* esteem!"],
+      facts: ["Rudolph’s nose glows because of special cells."],
+    },
+    {
+      name: "Ginger",
+      personality: "sweet and kind",
+      greetings: [
+        "Hello! Ginger here. Hope you’re having a lovely day.",
+        "Remember to be kind and spread cheer!",
+      ],
+      jokes: [
+        "What do you get when you cross a snowman and a dog? Frostbite!",
+      ],
+      facts: [
+        "Candy canes were originally made to look like shepherd's staffs.",
+      ],
+    },
+    {
+      name: "Crispin",
+      personality: "a little grumpy but nice",
+      greetings: [
+        "Hmph! Crispin here. Don't let me catch you being naughty.",
+        "Better be on your best behavior!",
+      ],
+      jokes: ["Why did the elf sleep so little? Because he was always on the *nice* list!"],
+      facts: ["Santa's workshop is powered by joy and magic."],
+    },
+    {
+      name: "Snowdrop",
+      personality: "curious",
+      greetings: [
+        "Hi! I’m Snowdrop, curious about everything!",
+        "Have you seen Santa’s reindeer around?",
+      ],
+      jokes: [
+        "Why don't reindeer tell jokes? Because they might *fall* flat!",
+      ],
+      facts: ["The Northern Lights can be seen from the North Pole."],
+    },
+  ];
+
+  const todayIndex = new Date().getDate() % elves.length;
+  const elfOfDay = elves[todayIndex];
+  const elfName = document.getElementById("elfName");
+  elfName.innerText = `🧝 Chat with ${elfOfDay.name} the ${elfOfDay.personality} Elf`;
+
+  const chatlog = document.getElementById("chatlog");
+  const chatInput = document.getElementById("chatInput");
+
+  function addMsg(who, text) {
+    const m = document.createElement("div");
+    m.className = "msg " + who;
+    m.innerHTML = `<b>${who === "user" ? "You" : elfOfDay.name}:</b> ${text}`;
+    chatlog.appendChild(m);
+    chatlog.scrollTop = chatlog.scrollHeight;
+  }
+
+  function elfResponse(text) {
+    text = text.toLowerCase();
+    if (text.includes("joke")) {
+      addMsg("elf", elfOfDay.jokes[Math.floor(Math.random() * elfOfDay.jokes.length)]);
+    } else if (text.includes("fact")) {
+      addMsg("elf", elfOfDay.facts[Math.floor(Math.random() * elfOfDay.facts.length)]);
+    } else if (text.includes("hello") || text.includes("hi")) {
+      addMsg("elf", elfOfDay.greetings[Math.floor(Math.random() * elfOfDay.greetings.length)]);
+    } else {
+      addMsg("elf", "Hmm... I don't understand, but I'm always here to listen!");
+    }
+  }
+
+  document.getElementById("btnSendChat").onclick = () => {
+    const val = chatInput.value.trim();
+    if (val) {
+      addMsg("user", val);
+      setTimeout(() => elfResponse(val), 700);
+      chatInput.value = "";
+    }
+  };
+
+  // Buttons toggles
+  const btnMusic = document.getElementById("btnMusic");
+  const btnResetSanta = document.getElementById("btnResetSanta");
+  const btnAdvent = document.getElementById("btnAdvent");
+  const btnGame = document.getElementById("btnGame");
+  const btnChat = document.getElementById("btnChat");
+  const btnQuiz = document.getElementById("btnQuiz");
+
+  const chatbox = document.getElementById("chatbox");
+  const advent = document.getElementById("advent");
+  const minigame = document.getElementById("minigame");
+  const quiz = document.getElementById("quiz");
+
+  btnMusic.onclick = toggleMusic;
+  btnResetSanta.onclick = () => {
+    resetSanta();
+    locationText.innerText = "🎅 Santa was reset to North Pole!";
+  };
+  btnAdvent.onclick = () => {
+    advent.style.display = "block";
+    minigame.style.display = "none";
+    chatbox.style.display = "none";
+    quiz.style.display = "none";
+  };
+  btnGame.onclick = () => {
+    minigame.style.display = "block";
+    advent.style.display = "none";
+    chatbox.style.display = "none";
+    quiz.style.display = "none";
+  };
+  btnChat.onclick = () => {
+    chatbox.style.display = "block";
+    advent.style.display = "none";
+    minigame.style.display = "none";
+    quiz.style.display = "none";
+    if (!chatlog.innerHTML) {
+      addMsg("elf", elfOfDay.greetings[0]);
+    }
+  };
+  btnQuiz.onclick = () => {
+    quiz.style.display = "block";
+    advent.style.display = "none";
+    minigame.style.display = "none";
+    chatbox.style.display = "none";
+  };
+
+  // Advent Calendar
+  const calendar = document.getElementById("calendar");
+  const adventMessage = document.getElementById("adventMessage");
+  let openedDays = JSON.parse(localStorage.getItem("openedDays") || "[]");
+
+  function renderCalendar() {
+    calendar.innerHTML = "";
+    for (let day = 1; day <= 24; day++) {
+      const d = document.createElement("div");
+      d.className = "day";
+      d.textContent = day;
+      if (openedDays.includes(day)) d.classList.add("opened");
+      d.onclick = () => openDay(day);
+      calendar.appendChild(d);
+    }
+  }
+
+  function openDay(day) {
+    if (openedDays.includes(day)) {
+      adventMessage.textContent = `You already opened day ${day}!`;
+      return;
+    }
+    const today = new Date();
+    if (day > today.getDate()) {
+      adventMessage.textContent = `Patience! Day ${day} hasn't arrived yet.`;
+      return;
+    }
+    openedDays.push(day);
+    localStorage.setItem("openedDays", JSON.stringify(openedDays));
+    renderCalendar();
+    adventMessage.textContent = `🎉 Surprise! You opened day ${day}!`;
+  }
+
+  renderCalendar();
+
+  // Mini Game Snow Clicker
+  const snowCountEl = document.getElementById("snowCount");
+  const btnClickSnow = document.getElementById("btnClickSnow");
+  let snowflakes = parseInt(localStorage.getItem("snowflakes") || "0", 10);
+
+  function updateSnowCount() {
+    snowCountEl.textContent = snowflakes;
+  }
+  btnClickSnow.onclick = () => {
+    snowflakes++;
+    localStorage.setItem("snowflakes", snowflakes);
+    updateSnowCount();
+  };
+  updateSnowCount();
+
+  // Nice or Naughty Quiz Logic
+  const quizForm = document.getElementById("quizForm");
+  const quizResult = document.getElementById("quizResult");
+
+  function calculateNiceNaughty() {
+    const formData = new FormData(quizForm);
+    let nice = 0, naughty = 0;
+    for (let [key, value] of formData.entries()) {
+      if (value === "nice") nice++;
+      else naughty++;
+    }
+    return nice >= naughty ? "Nice" : "Naughty";
+  }
+
+  quizForm.onsubmit = (e) => {
+    e.preventDefault();
+    const result = calculateNiceNaughty();
+    quizResult.textContent = `🎉 You are on the *${result}* list!`;
+    localStorage.setItem("niceNaughtyStatus", result);
+  };
+
+  // On load, show saved quiz result
+  const savedStatus = localStorage.getItem("niceNaughtyStatus");
+  if (savedStatus) {
+    quizResult.textContent = `🎉 You are on the *${savedStatus}* list!`;
+  }
+
+  // Daily Magical Surprise (Excitement Generator)
+  const surprises = [
+    "🎅 Santa found a lost reindeer today!",
+    "🎁 You unlocked a magical snow globe!",
+    "🧝 Frostbite the Elf has a riddle for you!",
+    "❄️ A blizzard is coming to the North Pole!",
+    "🎄 Twinkle the Elf baked cookies for you!",
+    "🛷 Crispin says: Be good or else!",
+    "🌟 Sparkle shines brighter today!",
+    "☃️ Snowdrop is curious about your wish list!",
+  ];
+  const dailySurprise = document.getElementById("dailySurprise");
+  // Show new surprise each day
+  const dayOfMonth = new Date().getDate();
+  dailySurprise.textContent = surprises[dayOfMonth % surprises.length];
+
+</script>
+</body>
+</html>
